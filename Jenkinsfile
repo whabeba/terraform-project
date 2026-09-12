@@ -1,7 +1,10 @@
 pipeline {
     agent any
 
-   
+    tools {
+        terraform 'Terraform' // نفس الاسم اللي كتبتيه في Manage Jenkins -> Tools
+    }
+
     parameters {
         choice(
             name: 'ENVIRONMENT',
@@ -15,14 +18,12 @@ pipeline {
     }
 
     stages {
-       
         stage('Checkout') {
             steps {
                 checkout scm
             }
         }
 
-        
         stage('Terraform Init') {
             steps {
                 sh 'terraform init'
@@ -45,11 +46,10 @@ pipeline {
 
         stage('Approval') {
             steps {
-                input message: "هل تريد تطبيق التغييرات على بيئة ${params.ENVIRONMENT}؟", ok: "Approve & Apply"
+                input message: "Apply changes to ${params.ENVIRONMENT}?", ok: "Approve"
             }
         }
 
-        // 6. تنفيذ التغييرات (Apply)
         stage('Apply') {
             steps {
                 sh 'terraform apply -input=false tfplan'
@@ -59,11 +59,10 @@ pipeline {
 
     post {
         success {
-            echo "SUCCESS: Infrastructure deployed successfully to ${params.ENVIRONMENT}!"
+            echo "SUCCESS: Infrastructure deployed successfully!"
         }
         failure {
-            echo "FAILURE: Pipeline failed. Check logs above."
-           
+            echo "FAILURE: Pipeline failed."
         }
     }
 }
